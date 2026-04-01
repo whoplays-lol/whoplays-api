@@ -34,6 +34,25 @@ public class MatchmakingHub : Hub
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"match-{matchGroupId}");
     }
 
+    /// <summary>
+    /// Client calls this when leaving a match.
+    /// Notifies remaining participants that someone left.
+    /// </summary>
+    public async Task LeaveMatch(string matchGroupId, string alias)
+    {
+        var groupName = $"match-{matchGroupId}";
+
+        // Notify everyone else in the group BEFORE removing this connection
+        await Clients.OthersInGroup(groupName)
+            .SendAsync("ParticipantLeft", alias);
+
+        // Remove this connection from the group
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupName);
+
+        _logger.LogInformation("Connection {ConnectionId} ({Alias}) left match {MatchGroupId}",
+            Context.ConnectionId, alias, matchGroupId);
+    }
+
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         _logger.LogDebug("Connection {ConnectionId} disconnected", Context.ConnectionId);
