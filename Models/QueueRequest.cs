@@ -17,6 +17,7 @@ public class QueueRequest
     public Guid? MatchGroupId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? MatchedAt { get; set; }
+    public List<string> ExcludedSessionIds { get; set; } = new();
 }
 
 public enum QueueStatus

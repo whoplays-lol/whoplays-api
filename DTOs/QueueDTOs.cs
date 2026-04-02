@@ -29,6 +29,8 @@ public class CreateQueueRequestDto
 
     [Range(1, 4)]
     public int CurrentGroupSize { get; set; }
+
+    public List<string>? ExcludedSessionIds { get; set; }
 }
 
 public class QueueRequestDto

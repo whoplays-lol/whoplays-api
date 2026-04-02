@@ -72,7 +72,8 @@ public class MatchmakingService : IMatchmakingService
             Rank = dto.Rank,
             CurrentGroupSize = dto.CurrentGroupSize,
             TotalRequired = totalRequired,
-            PlayersNeeded = totalRequired - dto.CurrentGroupSize
+            PlayersNeeded = totalRequired - dto.CurrentGroupSize,
+            ExcludedSessionIds = dto.ExcludedSessionIds ?? new List<string>()
         };
 
         _queueStore.Add(request);
@@ -231,13 +232,17 @@ public class MatchmakingService : IMatchmakingService
         for (int i = startIndex; i < candidates.Count; i++)
         {
             var candidate = candidates[i];
-            if (candidate.CurrentGroupSize <= remaining)
-            {
-                current.Add(candidate);
-                var result = FindSubset(candidates, remaining - candidate.CurrentGroupSize, i + 1, current);
-                if (result != null) return result;
-                current.RemoveAt(current.Count - 1);
-            }
+            if (candidate.CurrentGroupSize > remaining) continue;
+
+            bool excluded = current.Any(c =>
+                c.ExcludedSessionIds.Contains(candidate.SessionId) ||
+                candidate.ExcludedSessionIds.Contains(c.SessionId));
+            if (excluded) continue;
+
+            current.Add(candidate);
+            var result = FindSubset(candidates, remaining - candidate.CurrentGroupSize, i + 1, current);
+            if (result != null) return result;
+            current.RemoveAt(current.Count - 1);
         }
 
         return null;
