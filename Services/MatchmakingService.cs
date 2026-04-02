@@ -133,7 +133,6 @@ public class MatchmakingService : IMatchmakingService
         var pending = _queueStore.GetPending();
         if (pending.Count < 2) return;
 
-        // Group by matchmaking key: GameId + Server + Mode + TeamFormat
         var groups = pending.GroupBy(r => new
         {
             r.GameId,
@@ -146,50 +145,52 @@ public class MatchmakingService : IMatchmakingService
 
         foreach (var group in groups)
         {
-            var candidates = group
-                .Where(r => !matchedIds.Contains(r.Id))
-                .OrderBy(r => r.CreatedAt)
-                .ToList();
-
-            if (candidates.Count < 2) continue;
-
-            bool rankRequired = GameDefinitions.IsRankRequired(group.Key.GameId, group.Key.Mode);
-
-            List<QueueRequest>? combination = rankRequired
-                ? FindMatchWithRankTolerance(candidates, group.Key.GameId)
-                : FindCombination(candidates, candidates.First().TotalRequired);
-
-            if (combination == null) continue;
-
-            var matchGroup = new MatchGroup
+            while (true)
             {
-                GameId = group.Key.GameId,
-                Server = group.Key.Server,
-                Mode = group.Key.Mode,
-                TeamFormat = string.IsNullOrEmpty(group.Key.TeamFormat) ? null : group.Key.TeamFormat,
-                Rank = combination.First().Rank,
-                TotalPlayers = combination.Sum(r => r.CurrentGroupSize)
-            };
+                var candidates = group
+                    .Where(r => !matchedIds.Contains(r.Id))
+                    .OrderBy(r => r.CreatedAt)
+                    .ToList();
 
-            _matchStore.Add(matchGroup);
+                if (candidates.Count < 2) break;
 
-            foreach (var req in combination)
-            {
-                req.Status = QueueStatus.Matched;
-                req.MatchGroupId = matchGroup.Id;
-                req.MatchedAt = DateTime.UtcNow;
-                _queueStore.Update(req);
-                matchedIds.Add(req.Id);
-            }
+                bool rankRequired = GameDefinitions.IsRankRequired(group.Key.GameId, group.Key.Mode);
 
-            _logger.LogInformation("Match created {MatchId} — {Count} groups, game={GameId} mode={Mode}",
-                matchGroup.Id, combination.Count, group.Key.GameId, group.Key.Mode);
+                List<QueueRequest>? combination = rankRequired
+                    ? FindMatchWithRankTolerance(candidates, group.Key.GameId)
+                    : FindCombination(candidates, candidates.First().TotalRequired);
 
-            // Notify all matched participants via SignalR
-            foreach (var req in combination)
-            {
-                await _hub.Clients.Group(req.Id.ToString())
-                    .SendAsync("MatchFound", matchGroup.Id.ToString());
+                if (combination == null) break;
+
+                var matchGroup = new MatchGroup
+                {
+                    GameId = group.Key.GameId,
+                    Server = group.Key.Server,
+                    Mode = group.Key.Mode,
+                    TeamFormat = string.IsNullOrEmpty(group.Key.TeamFormat) ? null : group.Key.TeamFormat,
+                    Rank = combination.First().Rank,
+                    TotalPlayers = combination.Sum(r => r.CurrentGroupSize)
+                };
+
+                _matchStore.Add(matchGroup);
+
+                foreach (var req in combination)
+                {
+                    req.Status = QueueStatus.Matched;
+                    req.MatchGroupId = matchGroup.Id;
+                    req.MatchedAt = DateTime.UtcNow;
+                    _queueStore.Update(req);
+                    matchedIds.Add(req.Id);
+                }
+
+                _logger.LogInformation("Match created {MatchId} — {Count} requests, game={GameId} mode={Mode}",
+                    matchGroup.Id, combination.Count, group.Key.GameId, group.Key.Mode);
+
+                foreach (var req in combination)
+                {
+                    await _hub.Clients.Group(req.Id.ToString())
+                        .SendAsync("MatchFound", matchGroup.Id.ToString());
+                }
             }
         }
     }
