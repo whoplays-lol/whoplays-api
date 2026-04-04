@@ -17,6 +17,10 @@ public class QueueRequest
     public Guid? MatchGroupId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? MatchedAt { get; set; }
+    public List<string> ExcludedSessionIds { get; set; } = new();
+    public string? Descripcion { get; set; }
+    public string[]? TagsExtraidos { get; set; }
+    public bool IsSemanticSearch { get; set; } = false;
 }
 
 public enum QueueStatus

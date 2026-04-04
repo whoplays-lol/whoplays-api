@@ -59,4 +59,13 @@ public class MatchmakingController : ControllerBase
         var result = await _matchmaking.GetMatchGroupAsync(matchGroupId);
         return result == null ? NotFound() : Ok(result);
     }
+
+    /// <summary>GET /api/matchmaking/stats — Players searching per game.</summary>
+    [HttpGet("stats")]
+    public IActionResult GetStats()
+    {
+        var stats = _matchmaking.GetQueueStats();
+        var descriptions = _matchmaking.GetQueueDescriptions();
+        return Ok(new { stats, descriptions });
+    }
 }

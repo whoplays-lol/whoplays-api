@@ -13,6 +13,7 @@ public class MatchmakingService : IMatchmakingService
     private readonly InMemoryMatchStore _matchStore;
     private readonly IHubContext<MatchmakingHub> _hub;
     private readonly ILogger<MatchmakingService> _logger;
+    private readonly IGroqService _groq;
 
     // Prevents concurrent matchmaking runs from creating duplicate matches
     private static readonly SemaphoreSlim _matchmakingLock = new(1, 1);
@@ -21,12 +22,14 @@ public class MatchmakingService : IMatchmakingService
         InMemoryQueueStore queueStore,
         InMemoryMatchStore matchStore,
         IHubContext<MatchmakingHub> hub,
-        ILogger<MatchmakingService> logger)
+        ILogger<MatchmakingService> logger,
+        IGroqService groq)
     {
         _queueStore = queueStore;
         _matchStore = matchStore;
         _hub = hub;
         _logger = logger;
+        _groq = groq;
     }
 
     public async Task<QueueRequestDto> EnqueueAsync(CreateQueueRequestDto dto)
@@ -36,6 +39,34 @@ public class MatchmakingService : IMatchmakingService
 
         if (!game.Servers.Contains(dto.Server))
             throw new ArgumentException($"Server '{dto.Server}' is not valid for {game.Name}");
+
+        // Semantic search path — validates game + server, skips mode/rank validation
+        if (!string.IsNullOrEmpty(dto.Descripcion))
+        {
+            var semanticReq = new QueueRequest
+            {
+                SessionId = dto.SessionId,
+                Alias = dto.Alias,
+                GameId = dto.GameId,
+                Server = dto.Server,
+                Mode = "Semantic",
+                CurrentGroupSize = dto.CurrentGroupSize,
+                TotalRequired = 2,
+                PlayersNeeded = 1,
+                ExcludedSessionIds = dto.ExcludedSessionIds ?? new List<string>(),
+                IsSemanticSearch = true,
+                Descripcion = dto.Descripcion.Trim()
+            };
+
+            _queueStore.Add(semanticReq);
+
+            _logger.LogInformation("Enqueued semantic {Id} — alias={Alias} game={Game} server={Server}",
+                semanticReq.Id, semanticReq.Alias, game.Name, dto.Server);
+
+            await RunMatchmakingAsync();
+
+            return QueueRequestDto.From(_queueStore.GetById(semanticReq.Id) ?? semanticReq);
+        }
 
         var mode = game.Modes.FirstOrDefault(m => m.Key == dto.Mode)
             ?? throw new ArgumentException($"Mode '{dto.Mode}' is not valid for {game.Name}");
@@ -133,14 +164,15 @@ public class MatchmakingService : IMatchmakingService
         var pending = _queueStore.GetPending();
         if (pending.Count < 2) return;
 
-        // Group by matchmaking key: GameId + Server + Mode + TeamFormat
-        var groups = pending.GroupBy(r => new
-        {
-            r.GameId,
-            r.Server,
-            r.Mode,
-            TeamFormat = r.TeamFormat ?? ""
-        });
+        var groups = pending
+            .Where(r => !r.IsSemanticSearch)
+            .GroupBy(r => new
+            {
+                r.GameId,
+                r.Server,
+                r.Mode,
+                TeamFormat = r.TeamFormat ?? ""
+            });
 
         var matchedIds = new HashSet<Guid>();
 
@@ -192,6 +224,115 @@ public class MatchmakingService : IMatchmakingService
                     .SendAsync("MatchFound", matchGroup.Id.ToString());
             }
         }
+
+        // Semantic matching — grouped by gameId + server
+        var semanticPending = _queueStore.GetPending()
+            .Where(r => r.IsSemanticSearch
+                     && !string.IsNullOrEmpty(r.Descripcion)
+                     && !matchedIds.Contains(r.Id))
+            .ToList();
+
+        if (semanticPending.Count < 2) return;
+
+        var semanticGroups = semanticPending.GroupBy(r => new { r.GameId, r.Server });
+
+        foreach (var group in semanticGroups)
+        {
+            var candidates = group
+                .Where(r => !matchedIds.Contains(r.Id))
+                .OrderBy(r => r.CreatedAt)
+                .ToList();
+
+            if (candidates.Count < 2) continue;
+
+            QueueRequest? bestA = null, bestB = null;
+            int bestScore = 0;
+            string bestReason = "";
+
+            for (int i = 0; i < candidates.Count; i++)
+            {
+                for (int j = i + 1; j < candidates.Count; j++)
+                {
+                    var a = candidates[i];
+                    var b = candidates[j];
+
+                    try
+                    {
+                        var gameName = GameDefinitions.GetById(a.GameId)?.Name ?? "Unknown";
+                        var result = await _groq.CheckCompatibilityAsync(
+                            a.Descripcion!,
+                            b.Descripcion!,
+                            gameName);
+
+                        _logger.LogInformation(
+                            "Semantic check [{AliasA}] vs [{AliasB}]: compatible={C} score={S} reason={R}",
+                            a.Alias, b.Alias, result.Compatible, result.Score, result.Reason);
+
+                        if (result.Compatible && result.Score >= 7 && result.Score > bestScore)
+                        {
+                            bestScore = result.Score;
+                            bestA = a;
+                            bestB = b;
+                            bestReason = result.Reason;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError("Groq check failed: {Error}", ex.Message);
+                    }
+                }
+            }
+
+            if (bestA != null && bestB != null)
+            {
+                var matchGroup = new MatchGroup
+                {
+                    GameId = bestA.GameId,
+                    Server = bestA.Server,
+                    Mode = bestA.Mode,
+                    TotalPlayers = bestA.CurrentGroupSize + bestB.CurrentGroupSize,
+                    MatchReason = bestReason
+                };
+
+                _matchStore.Add(matchGroup);
+
+                foreach (var req in new[] { bestA, bestB })
+                {
+                    req.Status = QueueStatus.Matched;
+                    req.MatchGroupId = matchGroup.Id;
+                    req.MatchedAt = DateTime.UtcNow;
+                    _queueStore.Update(req);
+                    matchedIds.Add(req.Id);
+
+                    await _hub.Clients.Group(req.Id.ToString())
+                        .SendAsync("MatchFound", matchGroup.Id.ToString());
+                }
+
+                _logger.LogInformation(
+                    "Semantic match {MatchId} score={Score} [{AliasA}]+[{AliasB}] — {Reason}",
+                    matchGroup.Id, bestScore, bestA.Alias, bestB.Alias, bestReason);
+            }
+        }
+    }
+
+    public Dictionary<string, List<string>> GetQueueDescriptions()
+    {
+        var pending = _queueStore.GetPending();
+        return pending
+            .Where(r => r.IsSemanticSearch && !string.IsNullOrEmpty(r.Descripcion))
+            .GroupBy(r => GameDefinitions.GetById(r.GameId)?.Name ?? "Other")
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(r => r.Descripcion!).ToList()
+            );
+    }
+
+    public Dictionary<string, int> GetQueueStats()
+    {
+        var pending = _queueStore.GetPending();
+        return pending
+            .GroupBy(r => GameDefinitions.GetById(r.GameId)?.Name ?? "Other")
+            .ToDictionary(g => g.Key, g => g.Sum(r => r.CurrentGroupSize));
     }
 
     private List<QueueRequest>? FindMatchWithRankTolerance(List<QueueRequest> candidates, int gameId)

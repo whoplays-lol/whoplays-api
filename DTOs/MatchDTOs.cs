@@ -13,6 +13,7 @@ public class MatchGroupDto
     public string? TeamFormat { get; set; }
     public string? Rank { get; set; }
     public int TotalPlayers { get; set; }
+    public string? MatchReason { get; set; }
     public List<ParticipantDto> Participants { get; set; } = new();
     public DateTime CreatedAt { get; set; }
 
@@ -29,6 +30,7 @@ public class MatchGroupDto
             TeamFormat = m.TeamFormat,
             Rank = m.Rank,
             TotalPlayers = m.TotalPlayers,
+            MatchReason = m.MatchReason,
             Participants = participants.Select(p => new ParticipantDto
             {
                 Alias = p.Alias,

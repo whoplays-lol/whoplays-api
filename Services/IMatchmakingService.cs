@@ -10,4 +10,6 @@ public interface IMatchmakingService
     Task<bool> CancelAsync(Guid id, string sessionId);
     Task<MatchGroupDto?> GetMatchGroupAsync(Guid matchGroupId);
     Task RunMatchmakingAsync();
+    Dictionary<string, int> GetQueueStats();
+    Dictionary<string, List<string>> GetQueueDescriptions();
 }
