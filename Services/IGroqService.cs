@@ -1,12 +1,16 @@
 namespace WannaFill.API.Services;
 
-public record CompatibilityResult(bool Compatible, int Score, string Reason);
+public record ParsedProfile(
+    string? Rol,
+    string? Rango,
+    string? BuscaRol,
+    string? BuscaRango,
+    string Estilo,       // "ranked" | "casual" | "any"
+    string? Idioma,
+    int? TamañoEquipoBuscado  // total team size the player wants, e.g. 3 for trio
+);
 
 public interface IGroqService
 {
-    // Compara dos descripciones libres dentro del mismo juego/servidor
-    Task<CompatibilityResult> CheckCompatibilityAsync(
-        string descripcionA,
-        string descripcionB,
-        string gameName);
+    Task<ParsedProfile> ParseDescripcionAsync(string descripcion, string gameName);
 }

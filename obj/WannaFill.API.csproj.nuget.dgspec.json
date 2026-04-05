@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "E:\\Repos\\whoplays\\backend\\WannaFill.API\\WannaFill.API.csproj": {}
+    "/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/WannaFill.API.csproj": {}
   },
   "projects": {
-    "E:\\Repos\\whoplays\\backend\\WannaFill.API\\WannaFill.API.csproj": {
+    "/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/WannaFill.API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "E:\\Repos\\whoplays\\backend\\WannaFill.API\\WannaFill.API.csproj",
+        "projectUniqueName": "/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/WannaFill.API.csproj",
         "projectName": "WannaFill.API",
-        "projectPath": "E:\\Repos\\whoplays\\backend\\WannaFill.API\\WannaFill.API.csproj",
-        "packagesPath": "C:\\Users\\axelg\\.nuget\\packages\\",
-        "outputPath": "E:\\Repos\\whoplays\\backend\\WannaFill.API\\obj\\",
+        "projectPath": "/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/WannaFill.API.csproj",
+        "packagesPath": "/Users/pepilov/.nuget/packages/",
+        "outputPath": "/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\axelg\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "/Users/pepilov/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -71,7 +71,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.419/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.407/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

@@ -15,40 +15,29 @@ public class GroqService : IGroqService
         _logger = logger;
     }
 
-    public async Task<CompatibilityResult> CheckCompatibilityAsync(
-        string descripcionA,
-        string descripcionB,
-        string gameName)
+    public async Task<ParsedProfile> ParseDescripcionAsync(string descripcion, string gameName)
     {
         var prompt =
-            $"You are an extremely strict {gameName} ranked matchmaking evaluator.\n" +
-            $"Both players want to find a teammate in {gameName}.\n\n" +
-            $"Player A: \"{descripcionA}\"\n" +
-            $"Player B: \"{descripcionB}\"\n\n" +
-            "MUTUAL NEED RULE (check this first):\n" +
-            "- Determine what each player OFFERS (role, group size, skill) and what they NEED (role, group size).\n" +
-            "- A valid match means A's offer fills B's need AND B's offer fills A's need.\n" +
-            "- If both players need the same thing (e.g. both are groups of 2 looking for 3 more, both need an ADC, both need a support) → they CANNOT fill each other's need → compatible=false, score=1.\n" +
-            "- If both players are solo and each is looking for exactly 1 person → they CAN fill each other's need → proceed to other rules.\n\n" +
-            "RANK COMPATIBILITY RULE (apply after mutual need check):\n" +
-            "- Extract rank/tier from each description. Tier order low→high: Iron, Bronze, Silver, Gold, Platinum, Emerald, Diamond, Master, Grandmaster, Challenger (adapt for other games).\n" +
-            "- If rank difference is MORE than 1 tier → compatible=false, score=1. No exceptions.\n" +
-            "- If one mentions rank and the other doesn't, and the mentioned rank is Diamond+ → incompatible.\n" +
-            "- If neither mentions rank → neutral, continue.\n\n" +
-            "SECONDARY RULES (only if both above pass):\n" +
-            "1. Role/playstyle compatibility — incompatible roles: -2\n" +
-            "2. Schedule/timezone/language mismatch: -1\n" +
-            "3. One casual, one tryhard: -2\n\n" +
-            "SCORING: Start at 10, subtract per issue. compatible=true ONLY if score >= 7 AND all primary rules passed.\n" +
-            "If text is nonsense or unrelated to gaming → compatible=false, score=0.\n\n" +
-            "Respond ONLY with valid JSON, no extra text: {\"compatible\":true,\"score\":8,\"reason\":\"one sentence explaining decision\"}";
+            $"You are a {gameName} player profile extractor.\n" +
+            $"Extract structured data from this player description: \"{descripcion}\"\n\n" +
+            "Return ONLY valid JSON with these fields:\n" +
+            "- rol: their role/position/class (string or null if not mentioned)\n" +
+            "- rango: their rank/division/elo (string or null if not mentioned)\n" +
+            "- busca_rol: the role they are looking for in a teammate (string or null)\n" +
+            "- busca_rango: the rank they want their teammate to have (string or null)\n" +
+            "- estilo: \"ranked\", \"casual\", or \"any\" — infer from context\n" +
+            "- idioma: language they play in, e.g. \"es\", \"en\", \"pt\" (string or null)\n" +
+            $"- tamaño_equipo_buscado: total team size they want to form (integer or null). Examples: 'busco duo'=2, 'busco trio'=3, 'busco squad'=4, 'somos 2 buscamos 1'=3\n\n" +
+            "If a field cannot be determined, use null.\n" +
+            "Respond ONLY with valid JSON, no extra text:\n" +
+            "{\"rol\":\"support\",\"rango\":\"gold\",\"busca_rol\":\"adc\",\"busca_rango\":\"gold\",\"estilo\":\"ranked\",\"idioma\":\"es\",\"tamaño_equipo_buscado\":2}";
 
         var body = new
         {
             model = "llama-3.3-70b-versatile",
             messages = new[] { new { role = "user", content = prompt } },
-            max_tokens = 100,
-            temperature = 0.1
+            max_tokens = 150,
+            temperature = 0.0
         };
 
         var json = JsonSerializer.Serialize(body);
@@ -67,10 +56,8 @@ public class GroqService : IGroqService
         response.EnsureSuccessStatusCode();
 
         var responseJson = await response.Content.ReadAsStringAsync();
-        _logger.LogInformation("Groq raw response: {Response}", responseJson);
 
         using var doc = JsonDocument.Parse(responseJson);
-
         var content = doc.RootElement
             .GetProperty("choices")[0]
             .GetProperty("message")
@@ -81,13 +68,28 @@ public class GroqService : IGroqService
         if (content.StartsWith("json")) content = content[4..].Trim();
 
         using var resultDoc = JsonDocument.Parse(content);
-        var compatible = resultDoc.RootElement.GetProperty("compatible").GetBoolean();
-        var score = resultDoc.RootElement.GetProperty("score").GetInt32();
-        var reason = resultDoc.RootElement.GetProperty("reason").GetString() ?? "";
+        var root = resultDoc.RootElement;
 
-        _logger.LogInformation("Groq compatibility: compatible={Compatible} score={Score} reason={Reason}",
-            compatible, score, reason);
+        string? GetStr(string key) =>
+            root.TryGetProperty(key, out var el) && el.ValueKind == JsonValueKind.String
+                ? el.GetString() : null;
 
-        return new CompatibilityResult(compatible, score, reason);
+        int? GetInt(string key) =>
+            root.TryGetProperty(key, out var el) && el.ValueKind == JsonValueKind.Number
+                ? el.GetInt32() : null;
+
+        var profile = new ParsedProfile(
+            Rol: GetStr("rol"),
+            Rango: GetStr("rango"),
+            BuscaRol: GetStr("busca_rol"),
+            BuscaRango: GetStr("busca_rango"),
+            Estilo: GetStr("estilo") ?? "any",
+            Idioma: GetStr("idioma"),
+            TamañoEquipoBuscado: GetInt("tamaño_equipo_buscado")
+        );
+
+        _logger.LogInformation("Parsed profile for [{Desc}]: {@Profile}", descripcion, profile);
+
+        return profile;
     }
 }

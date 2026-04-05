@@ -58,6 +58,16 @@ public class MatchmakingService : IMatchmakingService
                 Descripcion = dto.Descripcion.Trim()
             };
 
+            try
+            {
+                var gameName = GameDefinitions.GetById(dto.GameId)?.Name ?? "Unknown";
+                semanticReq.PerfilParseado = await _groq.ParseDescripcionAsync(dto.Descripcion.Trim(), gameName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("Groq parse failed, proceeding without profile: {Error}", ex.Message);
+            }
+
             _queueStore.Add(semanticReq);
 
             _logger.LogInformation("Enqueued semantic {Id} — alias={Alias} game={Game} server={Server}",
@@ -225,11 +235,9 @@ public class MatchmakingService : IMatchmakingService
             }
         }
 
-        // Semantic matching — grouped by gameId + server
+        // Semantic matching — deterministic, grouped by gameId + server
         var semanticPending = _queueStore.GetPending()
-            .Where(r => r.IsSemanticSearch
-                     && !string.IsNullOrEmpty(r.Descripcion)
-                     && !matchedIds.Contains(r.Id))
+            .Where(r => r.IsSemanticSearch && !string.IsNullOrEmpty(r.Descripcion) && !matchedIds.Contains(r.Id))
             .ToList();
 
         if (semanticPending.Count < 2) return;
@@ -247,7 +255,6 @@ public class MatchmakingService : IMatchmakingService
 
             QueueRequest? bestA = null, bestB = null;
             int bestScore = 0;
-            string bestReason = "";
 
             for (int i = 0; i < candidates.Count; i++)
             {
@@ -256,42 +263,28 @@ public class MatchmakingService : IMatchmakingService
                     var a = candidates[i];
                     var b = candidates[j];
 
-                    try
-                    {
-                        var gameName = GameDefinitions.GetById(a.GameId)?.Name ?? "Unknown";
-                        var result = await _groq.CheckCompatibilityAsync(
-                            a.Descripcion!,
-                            b.Descripcion!,
-                            gameName);
+                    if (a.SessionId == b.SessionId) continue;
+                    if (a.ExcludedSessionIds.Contains(b.SessionId) || b.ExcludedSessionIds.Contains(a.SessionId)) continue;
 
-                        _logger.LogInformation(
-                            "Semantic check [{AliasA}] vs [{AliasB}]: compatible={C} score={S} reason={R}",
-                            a.Alias, b.Alias, result.Compatible, result.Score, result.Reason);
-
-                        if (result.Compatible && result.Score >= 7 && result.Score > bestScore)
-                        {
-                            bestScore = result.Score;
-                            bestA = a;
-                            bestB = b;
-                            bestReason = result.Reason;
-                        }
-                    }
-                    catch (Exception ex)
+                    int score = ComputeSemanticScore(a, b);
+                    if (score > bestScore)
                     {
-                        _logger.LogError("Groq check failed: {Error}", ex.Message);
+                        bestScore = score;
+                        bestA = a;
+                        bestB = b;
                     }
                 }
             }
 
-            if (bestA != null && bestB != null)
+            if (bestA != null && bestB != null && bestScore >= 2)
             {
                 var matchGroup = new MatchGroup
                 {
                     GameId = bestA.GameId,
                     Server = bestA.Server,
-                    Mode = bestA.Mode,
+                    Mode = "Semantic",
                     TotalPlayers = bestA.CurrentGroupSize + bestB.CurrentGroupSize,
-                    MatchReason = bestReason
+                    MatchReason = BuildMatchReason(bestA, bestB)
                 };
 
                 _matchStore.Add(matchGroup);
@@ -310,7 +303,7 @@ public class MatchmakingService : IMatchmakingService
 
                 _logger.LogInformation(
                     "Semantic match {MatchId} score={Score} [{AliasA}]+[{AliasB}] — {Reason}",
-                    matchGroup.Id, bestScore, bestA.Alias, bestB.Alias, bestReason);
+                    matchGroup.Id, bestScore, bestA.Alias, bestB.Alias, matchGroup.MatchReason);
             }
         }
     }
@@ -333,6 +326,77 @@ public class MatchmakingService : IMatchmakingService
         return pending
             .GroupBy(r => GameDefinitions.GetById(r.GameId)?.Name ?? "Other")
             .ToDictionary(g => g.Key, g => g.Sum(r => r.CurrentGroupSize));
+    }
+
+    private int ComputeSemanticScore(QueueRequest a, QueueRequest b)
+    {
+        var pa = a.PerfilParseado;
+        var pb = b.PerfilParseado;
+        int score = 0;
+
+        // Team size compatibility — hard filter
+        int combined = a.CurrentGroupSize + b.CurrentGroupSize;
+        if (pa?.TamañoEquipoBuscado != null && pa.TamañoEquipoBuscado != combined) return 0;
+        if (pb?.TamañoEquipoBuscado != null && pb.TamañoEquipoBuscado != combined) return 0;
+
+        // If no profiles parsed, allow match with base score 1
+        if (pa == null && pb == null) return 1;
+
+        // Role compatibility: A offers what B needs and vice versa
+        bool roleMatch =
+            (pa?.Rol != null && pb?.BuscaRol != null && pa.Rol.Equals(pb.BuscaRol, StringComparison.OrdinalIgnoreCase)) ||
+            (pb?.Rol != null && pa?.BuscaRol != null && pb.Rol.Equals(pa.BuscaRol, StringComparison.OrdinalIgnoreCase));
+        if (roleMatch) score += 3;
+
+        // Rank compatibility: ±1 tier
+        if (pa?.Rango != null && pb?.Rango != null)
+        {
+            if (RanksCompatible(a.GameId, pa.Rango, pb.Rango)) score += 3;
+            else return 0; // rank mismatch is a hard disqualifier
+        }
+
+        // Estilo compatibility
+        bool estiloOk =
+            pa?.Estilo == "any" || pb?.Estilo == "any" ||
+            pa?.Estilo == pb?.Estilo;
+        if (estiloOk) score += 2;
+        else return 0;
+
+        // Language compatibility
+        if (pa?.Idioma != null && pb?.Idioma != null)
+        {
+            if (pa.Idioma.Equals(pb.Idioma, StringComparison.OrdinalIgnoreCase)) score += 1;
+            else score -= 1;
+        }
+
+        return score;
+    }
+
+    private bool RanksCompatible(int gameId, string rankA, string rankB)
+    {
+        var game = GameDefinitions.GetById(gameId);
+        if (game?.Ranks == null) return true;
+        var ranks = game.Ranks;
+        int idxA = Array.IndexOf(ranks, rankA);
+        int idxB = Array.IndexOf(ranks, rankB);
+        if (idxA < 0 || idxB < 0) return true; // unknown rank, don't penalize
+        return Math.Abs(idxA - idxB) <= 1;
+    }
+
+    private string BuildMatchReason(QueueRequest a, QueueRequest b)
+    {
+        var parts = new List<string>();
+        var pa = a.PerfilParseado;
+        var pb = b.PerfilParseado;
+
+        if (pa?.Rol != null && pb?.Rol != null)
+            parts.Add($"{pa.Rol} + {pb.Rol}");
+        if (pa?.Rango != null && pb?.Rango != null)
+            parts.Add($"{pa.Rango} / {pb.Rango}");
+        if (pa?.Estilo != null && pa.Estilo != "any")
+            parts.Add(pa.Estilo);
+
+        return parts.Count > 0 ? string.Join(" — ", parts) : "Compatible profiles";
     }
 
     private List<QueueRequest>? FindMatchWithRankTolerance(List<QueueRequest> candidates, int gameId)

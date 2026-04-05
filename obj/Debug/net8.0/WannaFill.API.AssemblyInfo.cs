@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("WannaFill.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b3d3fdf9bf3a6ebcaeeb36e793725951a47753c7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ff92ca4b64593cb4ca7f67161f622628891d5f2a")]
 [assembly: System.Reflection.AssemblyProductAttribute("WannaFill.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("WannaFill.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

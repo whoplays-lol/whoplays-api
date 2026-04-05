@@ -1,35 +1,70 @@
-E:\Repos\whoplays\backend\WannaFill.API\bin\Debug\net8.0\appsettings.Development.json
-E:\Repos\whoplays\backend\WannaFill.API\bin\Debug\net8.0\appsettings.json
-E:\Repos\whoplays\backend\WannaFill.API\bin\Debug\net8.0\WannaFill.API.exe
-E:\Repos\whoplays\backend\WannaFill.API\bin\Debug\net8.0\WannaFill.API.deps.json
-E:\Repos\whoplays\backend\WannaFill.API\bin\Debug\net8.0\WannaFill.API.runtimeconfig.json
-E:\Repos\whoplays\backend\WannaFill.API\bin\Debug\net8.0\WannaFill.API.dll
-E:\Repos\whoplays\backend\WannaFill.API\bin\Debug\net8.0\WannaFill.API.pdb
-E:\Repos\whoplays\backend\WannaFill.API\bin\Debug\net8.0\Microsoft.OpenApi.dll
-E:\Repos\whoplays\backend\WannaFill.API\bin\Debug\net8.0\Newtonsoft.Json.dll
-E:\Repos\whoplays\backend\WannaFill.API\bin\Debug\net8.0\Swashbuckle.AspNetCore.Swagger.dll
-E:\Repos\whoplays\backend\WannaFill.API\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerGen.dll
-E:\Repos\whoplays\backend\WannaFill.API\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerUI.dll
-E:\Repos\whoplays\backend\WannaFill.API\bin\Debug\net8.0\System.Net.WebSockets.WebSocketProtocol.dll
-E:\Repos\whoplays\backend\WannaFill.API\obj\Debug\net8.0\WannaFill.API.csproj.AssemblyReference.cache
-E:\Repos\whoplays\backend\WannaFill.API\obj\Debug\net8.0\WannaFill.API.GeneratedMSBuildEditorConfig.editorconfig
-E:\Repos\whoplays\backend\WannaFill.API\obj\Debug\net8.0\WannaFill.API.AssemblyInfoInputs.cache
-E:\Repos\whoplays\backend\WannaFill.API\obj\Debug\net8.0\WannaFill.API.AssemblyInfo.cs
-E:\Repos\whoplays\backend\WannaFill.API\obj\Debug\net8.0\WannaFill.API.csproj.CoreCompileInputs.cache
-E:\Repos\whoplays\backend\WannaFill.API\obj\Debug\net8.0\WannaFill.API.MvcApplicationPartsAssemblyInfo.cs
-E:\Repos\whoplays\backend\WannaFill.API\obj\Debug\net8.0\WannaFill.API.MvcApplicationPartsAssemblyInfo.cache
-E:\Repos\whoplays\backend\WannaFill.API\obj\Debug\net8.0\WannaFill.API.sourcelink.json
-E:\Repos\whoplays\backend\WannaFill.API\obj\Debug\net8.0\staticwebassets.build.json
-E:\Repos\whoplays\backend\WannaFill.API\obj\Debug\net8.0\staticwebassets.development.json
-E:\Repos\whoplays\backend\WannaFill.API\obj\Debug\net8.0\staticwebassets\msbuild.WannaFill.API.Microsoft.AspNetCore.StaticWebAssets.props
-E:\Repos\whoplays\backend\WannaFill.API\obj\Debug\net8.0\staticwebassets\msbuild.build.WannaFill.API.props
-E:\Repos\whoplays\backend\WannaFill.API\obj\Debug\net8.0\staticwebassets\msbuild.buildMultiTargeting.WannaFill.API.props
-E:\Repos\whoplays\backend\WannaFill.API\obj\Debug\net8.0\staticwebassets\msbuild.buildTransitive.WannaFill.API.props
-E:\Repos\whoplays\backend\WannaFill.API\obj\Debug\net8.0\staticwebassets.pack.json
-E:\Repos\whoplays\backend\WannaFill.API\obj\Debug\net8.0\scopedcss\bundle\WannaFill.API.styles.css
-E:\Repos\whoplays\backend\WannaFill.API\obj\Debug\net8.0\WannaFil.9F9D4B99.Up2Date
-E:\Repos\whoplays\backend\WannaFill.API\obj\Debug\net8.0\WannaFill.API.dll
-E:\Repos\whoplays\backend\WannaFill.API\obj\Debug\net8.0\refint\WannaFill.API.dll
-E:\Repos\whoplays\backend\WannaFill.API\obj\Debug\net8.0\WannaFill.API.pdb
-E:\Repos\whoplays\backend\WannaFill.API\obj\Debug\net8.0\WannaFill.API.genruntimeconfig.cache
-E:\Repos\whoplays\backend\WannaFill.API\obj\Debug\net8.0\ref\WannaFill.API.dll
+E:/Repos/whoplays/backend/WannaFill.API/bin/Debug/net8.0/appsettings.Development.json
+E:/Repos/whoplays/backend/WannaFill.API/bin/Debug/net8.0/appsettings.json
+E:/Repos/whoplays/backend/WannaFill.API/bin/Debug/net8.0/WannaFill.API.exe
+E:/Repos/whoplays/backend/WannaFill.API/bin/Debug/net8.0/WannaFill.API.deps.json
+E:/Repos/whoplays/backend/WannaFill.API/bin/Debug/net8.0/WannaFill.API.runtimeconfig.json
+E:/Repos/whoplays/backend/WannaFill.API/bin/Debug/net8.0/WannaFill.API.dll
+E:/Repos/whoplays/backend/WannaFill.API/bin/Debug/net8.0/WannaFill.API.pdb
+E:/Repos/whoplays/backend/WannaFill.API/bin/Debug/net8.0/Microsoft.OpenApi.dll
+E:/Repos/whoplays/backend/WannaFill.API/bin/Debug/net8.0/Newtonsoft.Json.dll
+E:/Repos/whoplays/backend/WannaFill.API/bin/Debug/net8.0/Swashbuckle.AspNetCore.Swagger.dll
+E:/Repos/whoplays/backend/WannaFill.API/bin/Debug/net8.0/Swashbuckle.AspNetCore.SwaggerGen.dll
+E:/Repos/whoplays/backend/WannaFill.API/bin/Debug/net8.0/Swashbuckle.AspNetCore.SwaggerUI.dll
+E:/Repos/whoplays/backend/WannaFill.API/bin/Debug/net8.0/System.Net.WebSockets.WebSocketProtocol.dll
+E:/Repos/whoplays/backend/WannaFill.API/obj/Debug/net8.0/WannaFill.API.csproj.AssemblyReference.cache
+E:/Repos/whoplays/backend/WannaFill.API/obj/Debug/net8.0/WannaFill.API.GeneratedMSBuildEditorConfig.editorconfig
+E:/Repos/whoplays/backend/WannaFill.API/obj/Debug/net8.0/WannaFill.API.AssemblyInfoInputs.cache
+E:/Repos/whoplays/backend/WannaFill.API/obj/Debug/net8.0/WannaFill.API.AssemblyInfo.cs
+E:/Repos/whoplays/backend/WannaFill.API/obj/Debug/net8.0/WannaFill.API.csproj.CoreCompileInputs.cache
+E:/Repos/whoplays/backend/WannaFill.API/obj/Debug/net8.0/WannaFill.API.MvcApplicationPartsAssemblyInfo.cs
+E:/Repos/whoplays/backend/WannaFill.API/obj/Debug/net8.0/WannaFill.API.MvcApplicationPartsAssemblyInfo.cache
+E:/Repos/whoplays/backend/WannaFill.API/obj/Debug/net8.0/WannaFill.API.sourcelink.json
+E:/Repos/whoplays/backend/WannaFill.API/obj/Debug/net8.0/staticwebassets.build.json
+E:/Repos/whoplays/backend/WannaFill.API/obj/Debug/net8.0/staticwebassets.development.json
+E:/Repos/whoplays/backend/WannaFill.API/obj/Debug/net8.0/staticwebassets/msbuild.WannaFill.API.Microsoft.AspNetCore.StaticWebAssets.props
+E:/Repos/whoplays/backend/WannaFill.API/obj/Debug/net8.0/staticwebassets/msbuild.build.WannaFill.API.props
+E:/Repos/whoplays/backend/WannaFill.API/obj/Debug/net8.0/staticwebassets/msbuild.buildMultiTargeting.WannaFill.API.props
+E:/Repos/whoplays/backend/WannaFill.API/obj/Debug/net8.0/staticwebassets/msbuild.buildTransitive.WannaFill.API.props
+E:/Repos/whoplays/backend/WannaFill.API/obj/Debug/net8.0/staticwebassets.pack.json
+E:/Repos/whoplays/backend/WannaFill.API/obj/Debug/net8.0/scopedcss/bundle/WannaFill.API.styles.css
+E:/Repos/whoplays/backend/WannaFill.API/obj/Debug/net8.0/WannaFil.9F9D4B99.Up2Date
+E:/Repos/whoplays/backend/WannaFill.API/obj/Debug/net8.0/WannaFill.API.dll
+E:/Repos/whoplays/backend/WannaFill.API/obj/Debug/net8.0/refint/WannaFill.API.dll
+E:/Repos/whoplays/backend/WannaFill.API/obj/Debug/net8.0/WannaFill.API.pdb
+E:/Repos/whoplays/backend/WannaFill.API/obj/Debug/net8.0/WannaFill.API.genruntimeconfig.cache
+E:/Repos/whoplays/backend/WannaFill.API/obj/Debug/net8.0/ref/WannaFill.API.dll
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/bin/Debug/net8.0/appsettings.Development.json
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/bin/Debug/net8.0/appsettings.json
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/bin/Debug/net8.0/WannaFill.API
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/bin/Debug/net8.0/WannaFill.API.deps.json
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/bin/Debug/net8.0/WannaFill.API.runtimeconfig.json
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/bin/Debug/net8.0/WannaFill.API.dll
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/bin/Debug/net8.0/WannaFill.API.pdb
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/bin/Debug/net8.0/Microsoft.OpenApi.dll
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/bin/Debug/net8.0/Newtonsoft.Json.dll
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/bin/Debug/net8.0/Swashbuckle.AspNetCore.Swagger.dll
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/bin/Debug/net8.0/Swashbuckle.AspNetCore.SwaggerGen.dll
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/bin/Debug/net8.0/Swashbuckle.AspNetCore.SwaggerUI.dll
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/bin/Debug/net8.0/System.Net.WebSockets.WebSocketProtocol.dll
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/obj/Debug/net8.0/WannaFill.API.csproj.AssemblyReference.cache
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/obj/Debug/net8.0/WannaFill.API.GeneratedMSBuildEditorConfig.editorconfig
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/obj/Debug/net8.0/WannaFill.API.AssemblyInfoInputs.cache
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/obj/Debug/net8.0/WannaFill.API.AssemblyInfo.cs
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/obj/Debug/net8.0/WannaFill.API.csproj.CoreCompileInputs.cache
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/obj/Debug/net8.0/WannaFill.API.MvcApplicationPartsAssemblyInfo.cs
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/obj/Debug/net8.0/WannaFill.API.MvcApplicationPartsAssemblyInfo.cache
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/obj/Debug/net8.0/WannaFill.API.sourcelink.json
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/obj/Debug/net8.0/staticwebassets.build.json
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/obj/Debug/net8.0/staticwebassets.development.json
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/obj/Debug/net8.0/staticwebassets/msbuild.WannaFill.API.Microsoft.AspNetCore.StaticWebAssets.props
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/obj/Debug/net8.0/staticwebassets/msbuild.build.WannaFill.API.props
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/obj/Debug/net8.0/staticwebassets/msbuild.buildMultiTargeting.WannaFill.API.props
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/obj/Debug/net8.0/staticwebassets/msbuild.buildTransitive.WannaFill.API.props
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/obj/Debug/net8.0/staticwebassets.pack.json
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/obj/Debug/net8.0/scopedcss/bundle/WannaFill.API.styles.css
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/obj/Debug/net8.0/WannaFil.9F9D4B99.Up2Date
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/obj/Debug/net8.0/WannaFill.API.dll
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/obj/Debug/net8.0/refint/WannaFill.API.dll
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/obj/Debug/net8.0/WannaFill.API.pdb
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/obj/Debug/net8.0/WannaFill.API.genruntimeconfig.cache
+/Users/pepilov/Desktop/VSC/who plays project/whoplays-api/obj/Debug/net8.0/ref/WannaFill.API.dll

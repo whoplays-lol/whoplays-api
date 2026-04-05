@@ -27,7 +27,7 @@ public class CreateQueueRequestDto
     [MaxLength(50)]
     public string? Rank { get; set; }
 
-    [Range(1, 4)]
+    [Range(1, 5)]
     public int CurrentGroupSize { get; set; }
 
     public List<string>? ExcludedSessionIds { get; set; }

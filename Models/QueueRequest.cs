@@ -1,3 +1,5 @@
+using WannaFill.API.Services;
+
 namespace WannaFill.API.Models;
 
 public class QueueRequest
@@ -21,6 +23,7 @@ public class QueueRequest
     public string? Descripcion { get; set; }
     public string[]? TagsExtraidos { get; set; }
     public bool IsSemanticSearch { get; set; } = false;
+    public ParsedProfile? PerfilParseado { get; set; }
 }
 
 public enum QueueStatus
