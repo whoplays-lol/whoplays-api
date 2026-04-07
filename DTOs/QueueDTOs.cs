@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using WannaFill.API.GameConfig;
 using WannaFill.API.Models;
+using WannaFill.API.Services;
 
 namespace WannaFill.API.DTOs;
 
@@ -34,6 +35,8 @@ public class CreateQueueRequestDto
 
     [MaxLength(300)]
     public string? Descripcion { get; set; }
+
+    public ParsedProfile? PerfilParseado { get; init; }
 }
 
 public class QueueRequestDto

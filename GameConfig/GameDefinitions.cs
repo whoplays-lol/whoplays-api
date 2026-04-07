@@ -60,10 +60,11 @@ public static class GameDefinitions
             Servers: new[] { "EU", "NA", "SA", "Asia", "Australia" },
             Modes: new[]
             {
-                new ModeDefinition("Competitive", "Competitive", 5, true)
+                new ModeDefinition("Competitive", "Competitive", 5, true),
+                new ModeDefinition("Premier", "Premier", 5, true)
             },
             TeamFormats: null,
-            Ranks: new[] { "Silver I", "Silver II", "Silver III", "Silver IV", "Silver Elite", "Silver Elite Master", "Gold Nova I", "Gold Nova II", "Gold Nova III", "Gold Nova Master", "Master Guardian I", "Master Guardian II", "Legendary Eagle", "Legendary Eagle Master", "Supreme", "Global Elite" }
+            Ranks: new[] { "Silver I", "Silver II", "Silver III", "Silver IV", "Silver Elite", "Silver Elite Master", "Gold Nova I", "Gold Nova II", "Gold Nova III", "Gold Nova Master", "Master Guardian I", "Master Guardian II", "Legendary Eagle", "Legendary Eagle Master", "Supreme", "Global Elite", "Premier: 0-4,999", "Premier: 5,000-9,999", "Premier: 10,000-14,999", "Premier: 15,000-19,999", "Premier: 20,000-24,999", "Premier: 25,000+" }
         ),
         new GameDefinition(
             Id: 4,
@@ -104,7 +105,6 @@ public static class GameDefinitions
             Modes: new[]
             {
                 new ModeDefinition("Casual", "Casual", 3, false),
-                new ModeDefinition("Ranked1v1", "Ranked 1v1", 1, true),
                 new ModeDefinition("Ranked2v2", "Ranked 2v2", 2, true),
                 new ModeDefinition("Ranked3v3", "Ranked 3v3", 3, true)
             },
@@ -149,19 +149,6 @@ public static class GameDefinitions
             },
             TeamFormats: null,
             Ranks: new[] { "Copper", "Bronze", "Silver", "Gold", "Platinum", "Diamond", "Champion" }
-        ),
-        new GameDefinition(
-            Id: 10,
-            Name: "EA FC 25",
-            Slug: "eafc25",
-            Servers: new[] { "Global" },
-            Modes: new[]
-            {
-                new ModeDefinition("FUT", "FUT Rivals", 1, true),
-                new ModeDefinition("ProClubs", "Pro Clubs", 11, false)
-            },
-            TeamFormats: null,
-            Ranks: new[] { "Division 10", "Division 9", "Division 8", "Division 7", "Division 6", "Division 5", "Division 4", "Division 3", "Division 2", "Division 1", "Elite" }
         )
     };
 

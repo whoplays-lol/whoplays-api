@@ -49,7 +49,7 @@ public class MatchmakingService : IMatchmakingService
                 Alias = dto.Alias,
                 GameId = dto.GameId,
                 Server = dto.Server,
-                Mode = "Semantic",
+                Mode = "Casual", // will be overwritten after Groq parse
                 CurrentGroupSize = dto.CurrentGroupSize,
                 TotalRequired = 2,
                 PlayersNeeded = 1,
@@ -58,20 +58,119 @@ public class MatchmakingService : IMatchmakingService
                 Descripcion = dto.Descripcion.Trim()
             };
 
-            try
+            // Use pre-parsed profile if provided, otherwise call Groq
+            if (dto.PerfilParseado != null)
             {
-                var gameName = GameDefinitions.GetById(dto.GameId)?.Name ?? "Unknown";
-                semanticReq.PerfilParseado = await _groq.ParseDescripcionAsync(dto.Descripcion.Trim(), gameName);
+                semanticReq.PerfilParseado = dto.PerfilParseado;
             }
-            catch (Exception ex)
+            else
             {
-                _logger.LogWarning("Groq parse failed, proceeding without profile: {Error}", ex.Message);
+                try
+                {
+                    semanticReq.PerfilParseado = await _groq.ParseDescripcionAsync(dto.Descripcion.Trim(), game.Name);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning("Groq parse failed: {Error}", ex.Message);
+                }
+            }
+
+            // Post-parse: recalculate group sizes using resolved mode teamSize
+            var parsedProfile = semanticReq.PerfilParseado;
+            if (parsedProfile != null)
+            {
+                string? parsedModeKey = parsedProfile.Modo;
+                int? modeTeamSize = null;
+                if (!string.IsNullOrEmpty(parsedModeKey))
+                {
+                    var modeDef = game.Modes.FirstOrDefault(m => m.Key.Equals(parsedModeKey, StringComparison.OrdinalIgnoreCase));
+                    if (modeDef != null && modeDef.TeamSize > 0)
+                        modeTeamSize = modeDef.TeamSize;
+                }
+                if (!modeTeamSize.HasValue)
+                    modeTeamSize = game.Modes.Where(m => m.TeamSize > 0).Max(m => (int?)m.TeamSize);
+
+                if (modeTeamSize.HasValue)
+                {
+                    var total = parsedProfile.TamañoEquipoBuscado;
+                    var current = parsedProfile.TamañoGrupoActual;
+
+                    if (total.HasValue && total.Value < modeTeamSize.Value && !current.HasValue)
+                    {
+                        int seeking = total.Value;
+                        int realCurrent = modeTeamSize.Value - seeking;
+                        if (realCurrent >= 1)
+                        {
+                            semanticReq.PerfilParseado = parsedProfile with
+                            {
+                                TamañoEquipoBuscado = modeTeamSize.Value,
+                                TamañoGrupoActual = realCurrent
+                            };
+                        }
+                    }
+                    else if (total.HasValue && current.HasValue && total.Value != modeTeamSize.Value)
+                    {
+                        if (current.Value + total.Value == modeTeamSize.Value)
+                        {
+                            semanticReq.PerfilParseado = parsedProfile with
+                            {
+                                TamañoEquipoBuscado = modeTeamSize.Value
+                            };
+                        }
+                    }
+                }
+            }
+
+            // Resolve mode, total size and rank from parsed profile
+            {
+                var parsedMode = semanticReq.PerfilParseado?.Modo;
+                var parsedSize = semanticReq.PerfilParseado?.TamañoEquipoBuscado;
+                var parsedEstilo = semanticReq.PerfilParseado?.Estilo ?? "any";
+
+                string resolvedMode = "Casual";
+                if (!string.IsNullOrEmpty(parsedMode))
+                {
+                    var validMode = game.Modes.FirstOrDefault(m => m.Key.Equals(parsedMode, StringComparison.OrdinalIgnoreCase));
+                    if (validMode != null) resolvedMode = validMode.Key;
+                }
+                else if (parsedEstilo == "ranked")
+                {
+                    var rankedMode = game.Modes.FirstOrDefault(m => m.RankRequired);
+                    if (rankedMode != null) resolvedMode = rankedMode.Key;
+                }
+                else
+                {
+                    var casualMode = game.Modes.FirstOrDefault(m => !m.RankRequired);
+                    if (casualMode != null) resolvedMode = casualMode.Key;
+                }
+
+                int resolvedTotal = 2;
+                if (parsedSize.HasValue && parsedSize.Value >= 2)
+                    resolvedTotal = parsedSize.Value;
+                else
+                {
+                    var modeDef = game.Modes.FirstOrDefault(m => m.Key == resolvedMode);
+                    if (modeDef != null && modeDef.TeamSize > 0) resolvedTotal = modeDef.TeamSize;
+                }
+
+                int resolvedCurrentGroupSize = dto.CurrentGroupSize;
+                if (semanticReq.PerfilParseado?.TamañoGrupoActual.HasValue == true)
+                    resolvedCurrentGroupSize = semanticReq.PerfilParseado.TamañoGrupoActual.Value;
+
+                semanticReq.Mode = resolvedMode;
+                semanticReq.TotalRequired = resolvedTotal;
+                semanticReq.CurrentGroupSize = resolvedCurrentGroupSize;
+                semanticReq.PlayersNeeded = resolvedTotal - resolvedCurrentGroupSize;
+
+                if (!string.IsNullOrEmpty(semanticReq.PerfilParseado?.Rango))
+                    semanticReq.Rank = NormalizeRank(semanticReq.PerfilParseado.Rango);
             }
 
             _queueStore.Add(semanticReq);
 
-            _logger.LogInformation("Enqueued semantic {Id} — alias={Alias} game={Game} server={Server}",
-                semanticReq.Id, semanticReq.Alias, game.Name, dto.Server);
+            _logger.LogInformation(
+                "Enqueued semantic {Id} — alias={Alias} game={Game} server={Server} resolvedMode={Mode} total={Total}",
+                semanticReq.Id, semanticReq.Alias, game.Name, dto.Server, semanticReq.Mode, semanticReq.TotalRequired);
 
             await RunMatchmakingAsync();
 
@@ -174,8 +273,9 @@ public class MatchmakingService : IMatchmakingService
         var pending = _queueStore.GetPending();
         if (pending.Count < 2) return;
 
+        // All pending requests (classic and IA-resolved) participate in the same pool,
+        // grouped by GameId + Server + Mode + TeamFormat
         var groups = pending
-            .Where(r => !r.IsSemanticSearch)
             .GroupBy(r => new
             {
                 r.GameId,
@@ -203,6 +303,10 @@ public class MatchmakingService : IMatchmakingService
 
             if (combination == null) continue;
 
+            string? matchReason = combination.Count == 2 && combination.Any(r => r.PerfilParseado != null)
+                ? BuildMatchReason(combination[0], combination[1])
+                : null;
+
             var matchGroup = new MatchGroup
             {
                 GameId = group.Key.GameId,
@@ -210,7 +314,8 @@ public class MatchmakingService : IMatchmakingService
                 Mode = group.Key.Mode,
                 TeamFormat = string.IsNullOrEmpty(group.Key.TeamFormat) ? null : group.Key.TeamFormat,
                 Rank = combination.First().Rank,
-                TotalPlayers = combination.Sum(r => r.CurrentGroupSize)
+                TotalPlayers = combination.Sum(r => r.CurrentGroupSize),
+                MatchReason = matchReason
             };
 
             _matchStore.Add(matchGroup);
@@ -224,86 +329,15 @@ public class MatchmakingService : IMatchmakingService
                 matchedIds.Add(req.Id);
             }
 
-            _logger.LogInformation("Match created {MatchId} — {Count} groups, game={GameId} mode={Mode}",
-                matchGroup.Id, combination.Count, group.Key.GameId, group.Key.Mode);
+            _logger.LogInformation("Match created {MatchId} — {Count} groups, game={GameId} mode={Mode}{Reason}",
+                matchGroup.Id, combination.Count, group.Key.GameId, group.Key.Mode,
+                matchReason != null ? $" — {matchReason}" : "");
 
             // Notify all matched participants via SignalR
             foreach (var req in combination)
             {
                 await _hub.Clients.Group(req.Id.ToString())
                     .SendAsync("MatchFound", matchGroup.Id.ToString());
-            }
-        }
-
-        // Semantic matching — deterministic, grouped by gameId + server
-        var semanticPending = _queueStore.GetPending()
-            .Where(r => r.IsSemanticSearch && !string.IsNullOrEmpty(r.Descripcion) && !matchedIds.Contains(r.Id))
-            .ToList();
-
-        if (semanticPending.Count < 2) return;
-
-        var semanticGroups = semanticPending.GroupBy(r => new { r.GameId, r.Server });
-
-        foreach (var group in semanticGroups)
-        {
-            var candidates = group
-                .Where(r => !matchedIds.Contains(r.Id))
-                .OrderBy(r => r.CreatedAt)
-                .ToList();
-
-            if (candidates.Count < 2) continue;
-
-            QueueRequest? bestA = null, bestB = null;
-            int bestScore = 0;
-
-            for (int i = 0; i < candidates.Count; i++)
-            {
-                for (int j = i + 1; j < candidates.Count; j++)
-                {
-                    var a = candidates[i];
-                    var b = candidates[j];
-
-                    if (a.SessionId == b.SessionId) continue;
-                    if (a.ExcludedSessionIds.Contains(b.SessionId) || b.ExcludedSessionIds.Contains(a.SessionId)) continue;
-
-                    int score = ComputeSemanticScore(a, b);
-                    if (score > bestScore)
-                    {
-                        bestScore = score;
-                        bestA = a;
-                        bestB = b;
-                    }
-                }
-            }
-
-            if (bestA != null && bestB != null && bestScore >= 2)
-            {
-                var matchGroup = new MatchGroup
-                {
-                    GameId = bestA.GameId,
-                    Server = bestA.Server,
-                    Mode = "Semantic",
-                    TotalPlayers = bestA.CurrentGroupSize + bestB.CurrentGroupSize,
-                    MatchReason = BuildMatchReason(bestA, bestB)
-                };
-
-                _matchStore.Add(matchGroup);
-
-                foreach (var req in new[] { bestA, bestB })
-                {
-                    req.Status = QueueStatus.Matched;
-                    req.MatchGroupId = matchGroup.Id;
-                    req.MatchedAt = DateTime.UtcNow;
-                    _queueStore.Update(req);
-                    matchedIds.Add(req.Id);
-
-                    await _hub.Clients.Group(req.Id.ToString())
-                        .SendAsync("MatchFound", matchGroup.Id.ToString());
-                }
-
-                _logger.LogInformation(
-                    "Semantic match {MatchId} score={Score} [{AliasA}]+[{AliasB}] — {Reason}",
-                    matchGroup.Id, bestScore, bestA.Alias, bestB.Alias, matchGroup.MatchReason);
             }
         }
     }
@@ -355,6 +389,12 @@ public class MatchmakingService : IMatchmakingService
             else return 0; // rank mismatch is a hard disqualifier
         }
 
+        if (pa?.Rol != null && pb?.Rol != null &&
+            pa.Rol.Equals(pb.Rol, StringComparison.OrdinalIgnoreCase))
+        {
+            return 0;
+        }
+
         // Estilo compatibility
         bool estiloOk =
             pa?.Estilo == "any" || pb?.Estilo == "any" ||
@@ -377,10 +417,33 @@ public class MatchmakingService : IMatchmakingService
         var game = GameDefinitions.GetById(gameId);
         if (game?.Ranks == null) return true;
         var ranks = game.Ranks;
-        int idxA = Array.IndexOf(ranks, rankA);
-        int idxB = Array.IndexOf(ranks, rankB);
-        if (idxA < 0 || idxB < 0) return true; // unknown rank, don't penalize
+        var normA = NormalizeRank(rankA);
+        var normB = NormalizeRank(rankB);
+        int idxA = Array.FindIndex(ranks, r => r.Equals(normA, StringComparison.OrdinalIgnoreCase));
+        int idxB = Array.FindIndex(ranks, r => r.Equals(normB, StringComparison.OrdinalIgnoreCase));
+        _logger.LogInformation("RanksCompatible: rankA={RankA} idxA={IdxA} rankB={RankB} idxB={IdxB} diff={Diff}",
+            normA, idxA, normB, idxB, idxA >= 0 && idxB >= 0 ? Math.Abs(idxA - idxB) : -1);
+        if (idxA < 0 || idxB < 0) return false;
         return Math.Abs(idxA - idxB) <= 1;
+    }
+
+    private static string NormalizeRank(string rank)
+    {
+        if (string.IsNullOrEmpty(rank)) return rank;
+        return rank.Trim().ToLowerInvariant() switch
+        {
+            "hierro" => "Iron",
+            "bronce" or "bronze" => "Bronze",
+            "plata" => "Silver",
+            "oro" or "gold" => "Gold",
+            "platino" or "platinum" => "Platinum",
+            "esmeralda" or "emerald" => "Emerald",
+            "diamante" or "diamond" => "Diamond",
+            "maestro" or "master" => "Master",
+            "gran maestro" or "grandmaster" => "Grandmaster",
+            "retador" or "challenger" => "Challenger",
+            _ => rank
+        };
     }
 
     private string BuildMatchReason(QueueRequest a, QueueRequest b)
@@ -402,6 +465,7 @@ public class MatchmakingService : IMatchmakingService
     private List<QueueRequest>? FindMatchWithRankTolerance(List<QueueRequest> candidates, int gameId)
     {
         var ranks = candidates.Select(r => r.Rank).Distinct().ToList();
+        var allCombinations = new List<(List<QueueRequest> Combo, int Score)>();
 
         foreach (var anchorRank in ranks)
         {
@@ -413,10 +477,17 @@ public class MatchmakingService : IMatchmakingService
 
             int totalRequired = compatible.First().TotalRequired;
             var result = FindCombination(compatible, totalRequired);
-            if (result != null) return result;
+            if (result == null) continue;
+
+            // Use semantic score as tiebreaker when profiles are available
+            int score = result.Count == 2 ? ComputeSemanticScore(result[0], result[1]) : 0;
+            allCombinations.Add((result, score));
         }
 
-        return null;
+        if (allCombinations.Count == 0) return null;
+
+        // Return the highest-scoring combination (semantic score as tiebreaker)
+        return allCombinations.OrderByDescending(c => c.Score).First().Combo;
     }
 
     /// <summary>

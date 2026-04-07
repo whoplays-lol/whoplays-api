@@ -23,14 +23,17 @@ public class GroqService : IGroqService
             "Return ONLY valid JSON with these fields:\n" +
             "- rol: their role/position/class (string or null if not mentioned)\n" +
             "- rango: their rank/division/elo (string or null if not mentioned)\n" +
+            "IMPORTANT: For 'rango', only extract known rank names (Iron, Bronze, Silver, Gold, Platinum, Emerald, Diamond, Master, Grandmaster, Challenger, or their Spanish equivalents like Hierro, Bronce, Plata, Oro, Platino, Esmeralda, Diamante, Maestro, Gran Maestro, Retador, etc.). Do NOT extract numbers like '1', '2', '3' as ranks — those are likely referring to queue type (1v1, 2v2) or group size. If no valid rank name is found, set rango to null.\n" +
             "- busca_rol: the role they are looking for in a teammate (string or null)\n" +
             "- busca_rango: the rank they want their teammate to have (string or null)\n" +
             "- estilo: \"ranked\", \"casual\", or \"any\" — infer from context\n" +
             "- idioma: language they play in, e.g. \"es\", \"en\", \"pt\" (string or null)\n" +
-            $"- tamaño_equipo_buscado: total team size they want to form (integer or null). Examples: 'busco duo'=2, 'busco trio'=3, 'busco squad'=4, 'somos 2 buscamos 1'=3\n\n" +
+            $"- tamaño_equipo_buscado: total team size they want to form (integer or null). Examples: 'busco duo'=2, 'busco trio'=3, 'busco squad'=4, 'somos 2 buscamos 1'=3\n" +
+            "- tamaño_grupo_actual: how many players are already in the group (integer or null). Examples: 'somos 2'=2, 'voy solo'=1, 'somos 3 buscamos 2'=3. If not mentioned, set to null.\n" +
+            "- modo: the game mode they want to play (string or null). For League of Legends: 'Flex' or 'SoloDuo'. For Valorant: 'Ranked' or 'Casual'. For CS2: 'Competitive' or 'Premier'. For Fortnite: 'Ranked' or 'Casual'. For other games use their equivalent ranked/casual mode keys. If not mentioned, set to null.\n\n" +
             "If a field cannot be determined, use null.\n" +
             "Respond ONLY with valid JSON, no extra text:\n" +
-            "{\"rol\":\"support\",\"rango\":\"gold\",\"busca_rol\":\"adc\",\"busca_rango\":\"gold\",\"estilo\":\"ranked\",\"idioma\":\"es\",\"tamaño_equipo_buscado\":2}";
+            "{\"rol\":\"support\",\"rango\":\"gold\",\"busca_rol\":\"adc\",\"busca_rango\":\"gold\",\"estilo\":\"ranked\",\"idioma\":\"es\",\"tamaño_equipo_buscado\":2,\"tamaño_grupo_actual\":1,\"modo\":\"Flex\"}";
 
         var body = new
         {
@@ -85,7 +88,9 @@ public class GroqService : IGroqService
             BuscaRango: GetStr("busca_rango"),
             Estilo: GetStr("estilo") ?? "any",
             Idioma: GetStr("idioma"),
-            TamañoEquipoBuscado: GetInt("tamaño_equipo_buscado")
+            TamañoEquipoBuscado: GetInt("tamaño_equipo_buscado"),
+            Modo: GetStr("modo"),
+            TamañoGrupoActual: GetInt("tamaño_grupo_actual")
         );
 
         _logger.LogInformation("Parsed profile for [{Desc}]: {@Profile}", descripcion, profile);
