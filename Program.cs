@@ -12,6 +12,7 @@ builder.Services.AddSingleton<InMemoryChatStore>();
 // Services — Scoped (stateless, depend on singleton stores)
 builder.Services.AddScoped<IMatchmakingService, MatchmakingService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Services.AddHttpClient<IGroqService, GroqService>();
 
 // SignalR
 builder.Services.AddSignalR();

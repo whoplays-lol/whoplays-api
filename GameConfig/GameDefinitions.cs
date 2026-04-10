@@ -55,15 +55,16 @@ public static class GameDefinitions
         ),
         new GameDefinition(
             Id: 3,
-            Name: "CS:GO",
-            Slug: "csgo",
+            Name: "CS2",
+            Slug: "cs2",
             Servers: new[] { "EU", "NA", "SA", "Asia", "Australia" },
             Modes: new[]
             {
-                new ModeDefinition("Competitive", "Competitive", 5, true)
+                new ModeDefinition("Competitive", "Competitive", 5, true),
+                new ModeDefinition("Premier", "Premier", 5, true)
             },
             TeamFormats: null,
-            Ranks: new[] { "Silver I", "Silver II", "Silver III", "Silver IV", "Silver Elite", "Silver Elite Master", "Gold Nova I", "Gold Nova II", "Gold Nova III", "Gold Nova Master", "Master Guardian I", "Master Guardian II", "Legendary Eagle", "Legendary Eagle Master", "Supreme", "Global Elite" }
+            Ranks: new[] { "Silver I", "Silver II", "Silver III", "Silver IV", "Silver Elite", "Silver Elite Master", "Gold Nova I", "Gold Nova II", "Gold Nova III", "Gold Nova Master", "Master Guardian I", "Master Guardian II", "Legendary Eagle", "Legendary Eagle Master", "Supreme", "Global Elite", "Premier: 0-4,999", "Premier: 5,000-9,999", "Premier: 10,000-14,999", "Premier: 15,000-19,999", "Premier: 20,000-24,999", "Premier: 25,000+" }
         ),
         new GameDefinition(
             Id: 4,
@@ -82,6 +83,72 @@ public static class GameDefinitions
                 new TeamFormatDefinition("Squad", "Squad", 4)
             },
             Ranks: new[] { "Bronze", "Silver", "Gold", "Platinum", "Diamond", "Elite", "Champion", "Unreal" }
+        ),
+        new GameDefinition(
+            Id: 5,
+            Name: "Apex Legends",
+            Slug: "apex",
+            Servers: new[] { "NA", "EU", "SA", "AS", "OCE" },
+            Modes: new[]
+            {
+                new ModeDefinition("Casual", "Casual", 3, false),
+                new ModeDefinition("Ranked", "Ranked", 3, true)
+            },
+            TeamFormats: null,
+            Ranks: new[] { "Rookie", "Bronze", "Silver", "Gold", "Platinum", "Diamond", "Master", "Predator" }
+        ),
+        new GameDefinition(
+            Id: 6,
+            Name: "Rocket League",
+            Slug: "rocket-league",
+            Servers: new[] { "US-East", "US-West", "EU", "Asia-East", "Asia-SE", "Middle East", "Oceania", "SA" },
+            Modes: new[]
+            {
+                new ModeDefinition("Casual", "Casual", 3, false),
+                new ModeDefinition("Ranked2v2", "Ranked 2v2", 2, true),
+                new ModeDefinition("Ranked3v3", "Ranked 3v3", 3, true)
+            },
+            TeamFormats: null,
+            Ranks: new[] { "Bronze", "Silver", "Gold", "Platinum", "Diamond", "Champion", "Grand Champion", "Supersonic Legend" }
+        ),
+        new GameDefinition(
+            Id: 7,
+            Name: "Dota 2",
+            Slug: "dota2",
+            Servers: new[] { "US-East", "US-West", "EU-West", "EU-East", "Russia", "SE-Asia", "Australia", "SA", "Dubai", "India" },
+            Modes: new[]
+            {
+                new ModeDefinition("AllPick", "All Pick", 5, true),
+                new ModeDefinition("Turbo", "Turbo", 5, false)
+            },
+            TeamFormats: null,
+            Ranks: new[] { "Herald", "Guardian", "Crusader", "Archon", "Legend", "Ancient", "Divine", "Immortal" }
+        ),
+        new GameDefinition(
+            Id: 8,
+            Name: "Overwatch 2",
+            Slug: "overwatch2",
+            Servers: new[] { "Americas", "Europe", "Asia" },
+            Modes: new[]
+            {
+                new ModeDefinition("Quickplay", "Quick Play", 5, false),
+                new ModeDefinition("Competitive", "Competitive", 5, true)
+            },
+            TeamFormats: null,
+            Ranks: new[] { "Bronze", "Silver", "Gold", "Platinum", "Diamond", "Master", "Grandmaster", "Top 500" }
+        ),
+        new GameDefinition(
+            Id: 9,
+            Name: "Rainbow Six Siege",
+            Slug: "r6siege",
+            Servers: new[] { "NA", "EU", "LATAM", "Asia" },
+            Modes: new[]
+            {
+                new ModeDefinition("Casual", "Casual", 5, false),
+                new ModeDefinition("Ranked", "Ranked", 5, true)
+            },
+            TeamFormats: null,
+            Ranks: new[] { "Copper", "Bronze", "Silver", "Gold", "Platinum", "Diamond", "Champion" }
         )
     };
 

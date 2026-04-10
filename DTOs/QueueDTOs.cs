@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using WannaFill.API.GameConfig;
 using WannaFill.API.Models;
+using WannaFill.API.Services;
 
 namespace WannaFill.API.DTOs;
 
@@ -12,7 +13,7 @@ public class CreateQueueRequestDto
     [Required, MaxLength(100)]
     public string SessionId { get; set; } = null!;
 
-    [Range(1, 10)]
+    [Range(0, 10)]
     public int GameId { get; set; }
 
     [Required, MaxLength(50)]
@@ -27,10 +28,15 @@ public class CreateQueueRequestDto
     [MaxLength(50)]
     public string? Rank { get; set; }
 
-    [Range(1, 4)]
+    [Range(1, 5)]
     public int CurrentGroupSize { get; set; }
 
     public List<string>? ExcludedSessionIds { get; set; }
+
+    [MaxLength(300)]
+    public string? Descripcion { get; set; }
+
+    public ParsedProfile? PerfilParseado { get; init; }
 }
 
 public class QueueRequestDto
@@ -50,6 +56,8 @@ public class QueueRequestDto
     public string Status { get; set; } = null!;
     public string? MatchGroupId { get; set; }
     public DateTime CreatedAt { get; set; }
+    public bool IsSemanticSearch { get; set; }
+    public string? Descripcion { get; set; }
 
     public static QueueRequestDto From(QueueRequest r)
     {
@@ -70,7 +78,9 @@ public class QueueRequestDto
             PlayersNeeded = r.PlayersNeeded,
             Status = r.Status.ToString(),
             MatchGroupId = r.MatchGroupId?.ToString(),
-            CreatedAt = r.CreatedAt
+            CreatedAt = r.CreatedAt,
+            IsSemanticSearch = r.IsSemanticSearch,
+            Descripcion = r.Descripcion
         };
     }
 }

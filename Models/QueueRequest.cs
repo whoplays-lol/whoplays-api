@@ -1,3 +1,5 @@
+using WannaFill.API.Services;
+
 namespace WannaFill.API.Models;
 
 public class QueueRequest
@@ -18,6 +20,10 @@ public class QueueRequest
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? MatchedAt { get; set; }
     public List<string> ExcludedSessionIds { get; set; } = new();
+    public string? Descripcion { get; set; }
+    public string[]? TagsExtraidos { get; set; }
+    public bool IsSemanticSearch { get; set; } = false;
+    public ParsedProfile? PerfilParseado { get; set; }
 }
 
 public enum QueueStatus

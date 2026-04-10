@@ -9,5 +9,6 @@ public class MatchGroup
     public string? TeamFormat { get; set; }
     public string? Rank { get; set; }
     public int TotalPlayers { get; set; }
+    public string? MatchReason { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
